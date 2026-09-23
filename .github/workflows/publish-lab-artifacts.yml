@@ -73,9 +73,10 @@ jobs:
           jf rt build-collect-env isplt-lab-maven-clean "${BUILD_NUMBER}"
           jf rt build-publish isplt-lab-maven-clean "${BUILD_NUMBER}"
 
-      - name: Configure Docker
+      - name: Login to Artifactory Docker registry
         run: |
-          jf docker-config --repo-deploy isplt-docker-local
+          REGISTRY="${JF_URL#https://}"
+          jf docker login "${REGISTRY}"
 
       - name: Publish Docker flagged
         working-directory: apps/docker-flagged
