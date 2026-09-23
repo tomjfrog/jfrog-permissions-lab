@@ -16,21 +16,23 @@ Set with:
 gh variable set JF_URL --repo tomjfrog/jfrog-permissions-lab --body 'https://YOUR_TOMJPD2_URL'
 ```
 
-### Secrets (OIDC — recommended)
+### Secret (OIDC)
 
 | Name | Purpose |
 |------|---------|
-| `OIDC_PROVIDER_NAME` | OIDC provider name configured in JFrog for GitHub |
-| `OIDC_AUDIENCE` | OIDC audience configured for that provider |
+| `OIDC_PROVIDER_NAME` | OIDC provider name as configured in JFrog (Administration → OIDC) |
 
 ```bash
 gh secret set OIDC_PROVIDER_NAME --repo tomjfrog/jfrog-permissions-lab
-gh secret set OIDC_AUDIENCE --repo tomjfrog/jfrog-permissions-lab
 ```
+
+**No `OIDC_AUDIENCE` secret is required.** The workflow omits `oidc-audience` on `jfrog/setup-jfrog-cli@v4`, so the action uses the default audience (typically the GitHub repository owner URL). That must match what you configured on the JFrog OIDC integration. If you use a custom audience in JFrog, add optional repo variable `JF_OIDC_AUDIENCE` and wire it in the workflow — most tomjfrog setups do not need this.
+
+Workflow permissions must include `id-token: write` (already set in the workflow).
 
 ### Alternative: access token
 
-If OIDC is not configured, change [`.github/workflows/publish-lab-artifacts.yml`](../.github/workflows/publish-lab-artifacts.yml) to use `JF_ACCESS_TOKEN` per the `setup-jfrog-cli` skill and set:
+If OIDC is not configured, set `JF_ACCESS_TOKEN` on the setup step env and remove the `with: oidc-provider-name` block per the [setup-jfrog-cli](https://docs.jfrog.com/administration/docs/openid-connect-integration) token example:
 
 ```bash
 gh secret set JF_ACCESS_TOKEN --repo tomjfrog/jfrog-permissions-lab

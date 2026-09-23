@@ -33,7 +33,6 @@ jobs:
           JF_URL: ${{ vars.JF_URL }}
         with:
           oidc-provider-name: ${{ secrets.OIDC_PROVIDER_NAME }}
-          oidc-audience: ${{ secrets.OIDC_AUDIENCE }}
 
       - name: Configure npm
         run: |
@@ -130,7 +129,6 @@ jobs:
           JF_PROJECT: ${{ matrix.project_key }}
         with:
           oidc-provider-name: ${{ secrets.OIDC_PROVIDER_NAME }}
-          oidc-audience: ${{ secrets.OIDC_AUDIENCE }}
 
       - name: Publish npm flagged to project repo
         env:
