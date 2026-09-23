@@ -12,16 +12,24 @@ bash scripts/generate-user-specs.sh
 
 ## 2. Create platform repositories
 
-Create local repos `isplt-npm-local`, `isplt-maven-local`, `isplt-docker-local` and virtual repos `isplt-npm`, `isplt-maven`, `isplt-docker` (include locals + org remotes). Enable **Xray indexing** on the three local repos and on build info indexing for platform builds.
+**Required before the GitHub publish workflow** — otherwise `jf npm-config` fails with `The repository 'isplt-npm' does not exist`.
 
-Example (adjust package types via REST GET template from an existing repo):
+From repo root (admin `jf` login to tomjpd2):
 
 ```bash
-export JFROG_CLI_USER_AGENT='jfrog-permissions-lab-apply/1.0'
-# jf api --server-id tomjpd2 POST /artifactory/api/repositories/npm -d @lab/repo-templates/npm-local.json
+bash scripts/provision-platform-repos.sh
 ```
 
-Repo JSON templates are not generated here — use UI or copy from an existing npm/maven/docker local repo on tomjpd2.
+Creates:
+
+| Key | Type |
+|-----|------|
+| `isplt-npm-local`, `isplt-maven-local`, `isplt-docker-local` | Local (Xray index on) |
+| `isplt-npm`, `isplt-maven`, `isplt-docker` | Virtual (local + existing remotes `npm-remote`, `mavencentral-remote`) |
+
+Override remotes: `LAB_NPM_REMOTE=… LAB_MAVEN_REMOTE=… bash scripts/provision-platform-repos.sh`
+
+Manual creation via UI or REST is fine; match keys in [`lab/config.example.yaml`](../lab/config.example.yaml).
 
 ## 3. Create persona users
 

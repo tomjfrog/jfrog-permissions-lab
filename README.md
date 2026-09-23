@@ -41,10 +41,11 @@ Shared artifact repos and build names use the `isplt-` prefix (lab namespace on 
 ## Quick start (after apply)
 
 1. Copy config: `cp lab/config.example.yaml lab/config.yaml` and adjust if needed.
-2. Apply platform resources: follow [`docs/apply-tomjpd2.md`](docs/apply-tomjpd2.md).
-3. Run GitHub Actions workflow **Publish lab artifacts** (`workflow_dispatch`).
-4. Wait for Xray indexing and scans on lab repos.
-5. Create persona tokens (runbook) and run:
+2. **Platform repos on tomjpd2:** `bash scripts/provision-platform-repos.sh` (must run before GitHub publish).
+3. Apply users, permissions, projects: follow [`docs/apply-tomjpd2.md`](docs/apply-tomjpd2.md).
+4. Run GitHub Actions workflow **Publish lab artifacts** (`workflow_dispatch`).
+5. Wait for Xray indexing and scans on lab repos.
+6. Create persona tokens (runbook) and run:
 
 ```bash
 export JFROG_CLI_USER_AGENT='jfrog-permissions-lab-harness/1.0'
@@ -52,7 +53,7 @@ export LAB_TOKEN='<persona-token>'
 ./harness/journey.sh --case plt-f --config lab/config.yaml
 ```
 
-6. Fill [`docs/results-template.md`](docs/results-template.md); compare UI using [`docs/ui-checklist.md`](docs/ui-checklist.md).
+7. Fill [`docs/results-template.md`](docs/results-template.md); compare UI using [`docs/ui-checklist.md`](docs/ui-checklist.md).
 
 ## Red-flag packages (Impact Search needle)
 
