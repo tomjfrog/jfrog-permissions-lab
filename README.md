@@ -6,6 +6,17 @@ Lab on JFrog Platform Deployment **`tomjpd2`** to find the least-privilege permi
 
 Covers **platform Permissions V2** (cases A–I) and **JFrog Project** roles (one project + persona per case). Produces npm, Maven, and Docker artifacts (flagged + decoys) via GitHub Actions with Build Info.
 
+## Naming conventions
+
+Lab resources and personas use short prefixes so you can tell **platform-wide** setup from **project-scoped** setup at a glance:
+
+| Prefix | Scope | Examples |
+|--------|--------|----------|
+| **`plt`** | **Platform** — Permissions V2 targets, global Xray roles, and personas that are *not* tied to a JFrog Project | User `lab-plt-f`, permission `isplt-plt-F`, harness `--case plt-f`, matrix cases A–I |
+| **`prj`** | **Project** — JFrog Projects, project repos/build-info, project roles, and personas that belong to one project | Project `isplt-prj-full`, user `lab-prj-full`, harness `--case prj-full` |
+
+Shared artifact repos and build names use the `isplt-` prefix (lab namespace on tomjpd2); that prefix does not mean “platform” by itself — look for **`plt`** vs **`prj`** in the segment that follows (`isplt-plt-*` vs `isplt-prj-*`, or `lab-plt-*` vs `lab-prj-*` users).
+
 ## Prerequisites
 
 - JFrog CLI configured with `--server-id tomjpd2`
