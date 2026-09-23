@@ -10,8 +10,7 @@ Covers **platform Permissions V2** (cases A–I) and **JFrog Project** roles (on
 
 - JFrog CLI configured with `--server-id tomjpd2`
 - `jq`, `bash`
-- GitHub repo variables: `JF_URL` (tomjpd2 base URL)
-- GitHub secrets: OIDC (`OIDC_PROVIDER_NAME`, `OIDC_AUDIENCE`) **or** `JF_ACCESS_TOKEN` for publish workflows
+- GitHub: see [`docs/github-setup.md`](docs/github-setup.md) for `JF_URL` and OIDC secrets on [tomjfrog/jfrog-permissions-lab](https://github.com/tomjfrog/jfrog-permissions-lab)
 - Admin credentials on tomjpd2 for apply (not used by the analyst harness)
 
 ## Layout
