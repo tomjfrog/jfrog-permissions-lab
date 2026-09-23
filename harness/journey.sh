@@ -59,10 +59,10 @@ http_call() {
   cat "$body_file"
 }
 
-npm_name="lodash"
+npm_name="semver"
 npm_type="npm"
-npm_ver="4.17.21"
-mvn_name="commons-text"
+npm_ver="7.6.3"
+mvn_name="commons-lang3"
 mvn_type="maven"
 
 impact_search() {

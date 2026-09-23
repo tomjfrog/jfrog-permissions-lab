@@ -18,22 +18,22 @@ platform:
   build_name_prefix: isplt-lab
 
 # Red-flag OSS coordinates for Impact Search (package mode)
+# Pinned to versions that typically pass JFrog Curation (avoid blocked/vulnerable coords).
 red_flag:
   npm:
-    name: lodash
-    version: "4.17.21"
+    name: semver
+    version: "7.6.3"
     type: npm
   maven:
     group_id: org.apache.commons
-    artifact_id: commons-text
-    version: "1.9"
+    artifact_id: commons-lang3
+    version: "3.14.0"
     type: maven
-    # Impact Search name for Maven is often artifactId; namespace query param optional
-    search_name: commons-text
+    search_name: commons-lang3
   docker:
     # Docker image SBOM includes npm dependency from apps/docker-flagged
-    name: lodash
-    version: "4.17.21"
+    name: semver
+    version: "7.6.3"
     type: npm
 
 # Persona users (created on tomjpd2; passwords set at apply, tokens stored locally only)

@@ -4,8 +4,8 @@ These match `lab/config.example.yaml`. Change only together with apps and re-pub
 
 | Ecosystem | Package | Version | Impact Search `type` |
 |-----------|---------|---------|----------------------|
-| npm | lodash | 4.17.21 | npm |
-| Maven | commons-text (org.apache.commons) | 1.9 | maven |
-| Docker image SBOM | lodash (via `apps/docker-flagged`) | 4.17.21 | npm |
+| npm | semver | 7.6.3 | npm |
+| Maven | commons-lang3 (org.apache.commons) | 3.14.0 | maven |
+| Docker image SBOM | semver (via `apps/docker-flagged`) | 7.6.3 | npm |
 
-Selection rationale: widely indexed in Xray, pinned versions, not chosen as active incident/malware packages.
+Chosen to stay **Curation-friendly**: common utilities at pinned, non-blocked versions (replacing lodash / commons-text, which were blocked on tomjpd2).

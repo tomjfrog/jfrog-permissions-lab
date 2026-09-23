@@ -1,3 +1,3 @@
 "use strict";
-const _ = require("lodash");
-module.exports = () => _.capitalize("isplt-docker-flagged");
+const semver = require("semver");
+module.exports = () => semver.valid("1.0.0") ? "isplt-docker-flagged" : "invalid";
