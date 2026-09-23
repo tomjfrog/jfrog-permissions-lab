@@ -1,0 +1,37 @@
+---
+description: JFrog CLI (jf) — mandatory --help discovery before any new command; never guess
+alwaysApply: true
+---
+
+# JFrog CLI — mandatory `--help` discovery (strict)
+
+Applies in **all contexts**: GitHub Actions, shell scripts, runbooks, skills, harnesses, docs, and chat answers. Not limited to CI.
+
+## Hard rules
+
+1. **Never invent** `jf` subcommands, flags, or `*-config` variants from analogy or memory (e.g. **no** `jf docker-config`; `jf npm-config` / `jf mvn-config` do not imply a Docker equivalent).
+2. **Before the first use** of a `jf` subcommand in a task, run help in the shell (when `jf` is on PATH):
+   - `jf --help`
+   - `jf <namespace> --help` or `jf <command> --help` for the exact invocation
+3. **Before adding or recommending any new `jf` line** in repo files or user-facing instructions, verify that subcommand and flags appear in the help output from step 2 in **this conversation**. If you cannot run `jf`, use [JFrog CLI docs](https://docs.jfrog.com/jfrog-cli/docs) or Context7 — still **do not** guess names.
+4. **When you introduce a new `jf` command** in code or prose, state briefly that it was verified (e.g. “`jf docker login` — listed under `jf docker --help`”).
+
+## Workflow
+
+```
+Need jf X → run jf … --help → only use what help lists → then write/run
+```
+
+Uncertain about a flag → run `jf <command> --help` again; do not assume parity with `npm`, `mvn`, or `rt` subcommands.
+
+## Examples
+
+```bash
+# ✅ Required before Docker steps in any file
+jf docker --help
+
+# ❌ Forbidden without help proof
+jf docker-config --repo-deploy my-docker-local
+```
+
+If the user reports `'jf foo' is not a jf command`, treat it as a discovery failure: run `--help`, fix the command, and update any rule/skill that implied `foo` existed.
