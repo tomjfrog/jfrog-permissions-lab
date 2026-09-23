@@ -1,0 +1,8 @@
+{
+  "username": "lab-prj-nobuild",
+  "email": "lab-prj-nobuild@labs.invalid",
+  "admin": false,
+  "matrix_case": "prj_nobuild",
+  "xray_global_roles": [],
+  "access_permission": null
+}

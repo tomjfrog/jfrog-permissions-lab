@@ -1,0 +1,8 @@
+{
+  "username": "lab-prj-developer",
+  "email": "lab-prj-developer@labs.invalid",
+  "admin": false,
+  "matrix_case": "prj_developer",
+  "xray_global_roles": [],
+  "access_permission": null
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Security Analyst Lab",
+  "type": "CUSTOM",
+  "environments": ["DEV", "PROD"],
+  "actions": ["READ_BUILD", "MANAGE_XRAY_REPORTS"]
+}

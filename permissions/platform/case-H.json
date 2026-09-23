@@ -1,0 +1,16 @@
+{
+  "name": "isplt-plt-H",
+  "resources": {
+    "artifact": {
+      "targets": {
+        "isplt-npm-local": { "include_patterns": ["**"], "exclude_patterns": [] }
+      },
+      "actions": { "users": { "lab-plt-h": ["READ"] }, "groups": {} }
+    },    "build": {
+      "targets": {
+        "isplt-lab**/**": { "include_patterns": ["**"], "exclude_patterns": [] }
+      },
+      "actions": { "users": { "lab-plt-h": ["READ"] }, "groups": {} }
+    }
+  }
+}

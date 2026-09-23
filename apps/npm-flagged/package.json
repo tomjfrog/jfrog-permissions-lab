@@ -1,0 +1,10 @@
+{
+  "name": "@isplt/npm-flagged",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lab app with red-flag dependency for Impact Search (lodash)",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "4.17.21"
+  }
+}

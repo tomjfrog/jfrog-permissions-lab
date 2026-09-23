@@ -1,0 +1,89 @@
+# Copy to lab/config.yaml and customize. Do not commit secrets or persona tokens.
+
+server_id: tomjpd2
+# Base URL is read from `jf config show` for server_id at apply/harness time.
+
+github:
+  repo: jfrog-permissions-lab  # owner/repo slug for build-info VCS assertions
+
+# Shared platform-track repos (no projectKey)
+platform:
+  repos:
+    npm_local: isplt-npm-local
+    maven_local: isplt-maven-local
+    docker_local: isplt-docker-local
+    npm_virtual: isplt-npm
+    maven_virtual: isplt-maven
+    docker_virtual: isplt-docker
+  build_name_prefix: isplt-lab
+
+# Red-flag OSS coordinates for Impact Search (package mode)
+red_flag:
+  npm:
+    name: lodash
+    version: "4.17.21"
+    type: npm
+  maven:
+    group_id: org.apache.commons
+    artifact_id: commons-text
+    version: "1.9"
+    type: maven
+    # Impact Search name for Maven is often artifactId; namespace query param optional
+    search_name: commons-text
+  docker:
+    # Docker image SBOM includes npm dependency from apps/docker-flagged
+    name: lodash
+    version: "4.17.21"
+    type: npm
+
+# Persona users (created on tomjpd2; passwords set at apply, tokens stored locally only)
+personas:
+  platform:
+    - id: plt-a
+      username: lab-plt-a
+      matrix_case: A
+    - id: plt-b
+      username: lab-plt-b
+      matrix_case: B
+    - id: plt-c
+      username: lab-plt-c
+      matrix_case: C
+    - id: plt-d
+      username: lab-plt-d
+      matrix_case: D
+    - id: plt-e
+      username: lab-plt-e
+      matrix_case: E
+    - id: plt-f
+      username: lab-plt-f
+      matrix_case: F
+    - id: plt-g
+      username: lab-plt-g
+      matrix_case: G
+    - id: plt-h
+      username: lab-plt-h
+      matrix_case: H
+    - id: plt-i
+      username: lab-plt-i
+      matrix_case: I
+  project:
+    - id: prj-full
+      username: lab-prj-full
+      project_key: isplt-prj-full
+      matrix_case: prj_full
+    - id: prj-noreports
+      username: lab-prj-noreports
+      project_key: isplt-prj-noreports
+      matrix_case: prj_noreports
+    - id: prj-nobuild
+      username: lab-prj-nobuild
+      project_key: isplt-prj-nobuild
+      matrix_case: prj_nobuild
+    - id: prj-noartifact
+      username: lab-prj-noartifact
+      project_key: isplt-prj-noartifact
+      matrix_case: prj_noartifact
+    - id: prj-developer
+      username: lab-prj-developer
+      project_key: isplt-prj-developer
+      matrix_case: prj_developer

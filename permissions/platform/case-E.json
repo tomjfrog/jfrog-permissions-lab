@@ -1,0 +1,11 @@
+{
+  "name": "isplt-plt-E",
+  "resources": {
+    "build": {
+      "targets": {
+        "isplt-lab**/**": { "include_patterns": ["**"], "exclude_patterns": [] }
+      },
+      "actions": { "users": { "lab-plt-e": ["READ"] }, "groups": {} }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "isplt-plt-G",
+  "resources": {
+    "artifact": {
+      "targets": { "isplt-npm-local": {"include_patterns": ["**"], "exclude_patterns": []},"isplt-maven-local": {"include_patterns": ["**"], "exclude_patterns": []},"isplt-docker-local": {"include_patterns": ["**"], "exclude_patterns": []} },
+      "actions": { "users": { "lab-plt-g": ["READ"] }, "groups": {} }
+    },    "build": {
+      "targets": {
+        "isplt-lab**/**": { "include_patterns": ["**"], "exclude_patterns": [] }
+      },
+      "actions": { "users": { "lab-plt-g": ["READ"] }, "groups": {} }
+    }
+  }
+}

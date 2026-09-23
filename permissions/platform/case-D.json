@@ -1,0 +1,9 @@
+{
+  "name": "isplt-plt-D",
+  "resources": {
+    "artifact": {
+      "targets": { "isplt-npm-local": {"include_patterns": ["**"], "exclude_patterns": []},"isplt-maven-local": {"include_patterns": ["**"], "exclude_patterns": []},"isplt-docker-local": {"include_patterns": ["**"], "exclude_patterns": []} },
+      "actions": { "users": { "lab-plt-d": ["READ"] }, "groups": {} }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@isplt/npm-clean",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Decoy lab app without red-flag dependency",
+  "main": "index.js",
+  "dependencies": {}
+}

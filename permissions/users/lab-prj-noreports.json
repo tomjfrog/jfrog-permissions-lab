@@ -1,0 +1,8 @@
+{
+  "username": "lab-prj-noreports",
+  "email": "lab-prj-noreports@labs.invalid",
+  "admin": false,
+  "matrix_case": "prj_noreports",
+  "xray_global_roles": [],
+  "access_permission": null
+}

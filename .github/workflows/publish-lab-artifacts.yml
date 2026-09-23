@@ -1,0 +1,148 @@
+name: Publish lab artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: platform (shared repos) or all-project-keys
+        required: true
+        default: platform
+        type: choice
+        options:
+          - platform
+          - projects
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  JF_URL: ${{ vars.JF_URL }}
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  publish-platform:
+    if: inputs.track == 'platform'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+        with:
+          oidc-provider-name: ${{ secrets.OIDC_PROVIDER_NAME }}
+          oidc-audience: ${{ secrets.OIDC_AUDIENCE }}
+
+      - name: Configure npm
+        run: |
+          jf npm-config --repo-deploy isplt-npm-local --repo-resolve isplt-npm
+
+      - name: Publish npm flagged
+        working-directory: apps/npm-flagged
+        run: |
+          jf npm install
+          jf npm publish --build-name=isplt-lab-npm-flagged --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-npm-flagged "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-npm-flagged "${BUILD_NUMBER}"
+
+      - name: Publish npm clean
+        working-directory: apps/npm-clean
+        run: |
+          jf npm install
+          jf npm publish --build-name=isplt-lab-npm-clean --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-npm-clean "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-npm-clean "${BUILD_NUMBER}"
+
+      - name: Configure Maven
+        run: |
+          jf mvn-config --repo-deploy-releases isplt-maven-local --repo-deploy-snapshots isplt-maven-local \
+            --repo-resolve-releases isplt-maven --repo-resolve-snapshots isplt-maven
+
+      - name: Publish Maven flagged
+        working-directory: apps/maven-flagged
+        run: |
+          jf mvn clean install -DskipTests --build-name=isplt-lab-maven-flagged --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-maven-flagged "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-maven-flagged "${BUILD_NUMBER}"
+
+      - name: Publish Maven clean
+        working-directory: apps/maven-clean
+        run: |
+          jf mvn clean install -DskipTests --build-name=isplt-lab-maven-clean --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-maven-clean "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-maven-clean "${BUILD_NUMBER}"
+
+      - name: Configure Docker
+        run: |
+          jf docker-config --repo-deploy isplt-docker-local
+
+      - name: Publish Docker flagged
+        working-directory: apps/docker-flagged
+        run: |
+          REGISTRY="${JF_URL#https://}"
+          IMAGE="${REGISTRY}/isplt-docker-local/isplt-docker-flagged:${BUILD_NUMBER}"
+          jf docker build -t "${IMAGE}" .
+          jf docker push "${IMAGE}" --build-name=isplt-lab-docker-flagged --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-docker-flagged "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-docker-flagged "${BUILD_NUMBER}"
+
+      - name: Publish Docker clean
+        working-directory: apps/docker-clean
+        run: |
+          REGISTRY="${JF_URL#https://}"
+          IMAGE="${REGISTRY}/isplt-docker-local/isplt-docker-clean:${BUILD_NUMBER}"
+          jf docker build -t "${IMAGE}" .
+          jf docker push "${IMAGE}" --build-name=isplt-lab-docker-clean --build-number="${BUILD_NUMBER}"
+          jf rt build-collect-env isplt-lab-docker-clean "${BUILD_NUMBER}"
+          jf rt build-publish isplt-lab-docker-clean "${BUILD_NUMBER}"
+
+      - name: Scan builds (optional baseline)
+        continue-on-error: true
+        run: |
+          for B in isplt-lab-npm-flagged isplt-lab-npm-clean isplt-lab-maven-flagged isplt-lab-maven-clean \
+            isplt-lab-docker-flagged isplt-lab-docker-clean; do
+            jf rt build-scan "${B}" "${BUILD_NUMBER}" || true
+          done
+
+  publish-projects:
+    if: inputs.track == 'projects'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project_key:
+          - isplt-prj-full
+          - isplt-prj-noreports
+          - isplt-prj-nobuild
+          - isplt-prj-noartifact
+          - isplt-prj-developer
+    env:
+      JF_PROJECT: ${{ matrix.project_key }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_PROJECT: ${{ matrix.project_key }}
+        with:
+          oidc-provider-name: ${{ secrets.OIDC_PROVIDER_NAME }}
+          oidc-audience: ${{ secrets.OIDC_AUDIENCE }}
+
+      - name: Publish npm flagged to project repo
+        env:
+          NPM_LOCAL: ${{ matrix.project_key }}-npm-local
+          NPM_VIRTUAL: ${{ matrix.project_key }}-npm
+        run: |
+          jf npm-config --repo-deploy "${NPM_LOCAL}" --repo-resolve "${NPM_VIRTUAL}"
+          cd apps/npm-flagged
+          jf npm install
+          jf npm publish --build-name="${{ matrix.project_key }}-npm-flagged" \
+            --build-number="${BUILD_NUMBER}" --project="${{ matrix.project_key }}"
+          jf rt build-collect-env "${{ matrix.project_key }}-npm-flagged" "${BUILD_NUMBER}" \
+            --project="${{ matrix.project_key }}"
+          jf rt build-publish "${{ matrix.project_key }}-npm-flagged" "${BUILD_NUMBER}" \
+            --project="${{ matrix.project_key }}"

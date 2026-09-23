@@ -1,0 +1,8 @@
+{
+  "username": "lab-plt-c",
+  "email": "lab-plt-c@labs.invalid",
+  "admin": false,
+  "matrix_case": "C",
+  "xray_global_roles": [],
+  "access_permission": "permissions/platform/case-C.json"
+}

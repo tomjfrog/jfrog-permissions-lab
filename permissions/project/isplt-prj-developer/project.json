@@ -1,0 +1,9 @@
+{
+  "display_name": "Impact Search Lab Developer",
+  "project_key": "isplt-prj-developer",
+  "admin_privileges": {
+    "manage_members": true,
+    "manage_resources": true,
+    "index_resources": true
+  }
+}

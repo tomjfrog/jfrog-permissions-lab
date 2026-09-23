@@ -1,0 +1,10 @@
+{
+  "display_name": "Impact Search Lab Full",
+  "description": "Project track — candidate least privilege role",
+  "project_key": "isplt-prj-full",
+  "admin_privileges": {
+    "manage_members": true,
+    "manage_resources": true,
+    "index_resources": true
+  }
+}

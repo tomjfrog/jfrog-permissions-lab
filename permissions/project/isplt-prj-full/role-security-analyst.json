@@ -1,0 +1,11 @@
+{
+  "name": "Security Analyst Lab",
+  "description": "Read repos/builds + Manage Reports for Impact Search lab",
+  "type": "CUSTOM",
+  "environments": ["DEV", "PROD"],
+  "actions": [
+    "READ_REPOSITORY",
+    "READ_BUILD",
+    "MANAGE_XRAY_REPORTS"
+  ]
+}

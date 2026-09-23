@@ -1,0 +1,95 @@
+# Analyst journey steps (all cases). harness/journey.sh implements these API checks.
+
+journey_steps:
+  - id: impact_search_npm
+    description: Impact Search by npm red-flag package
+  - id: impact_search_maven
+    description: Impact Search by Maven red-flag package
+  - id: impact_search_docker
+    description: Impact Search by npm package present in docker-flagged image SBOM
+  - id: xray_summary_flagged
+    description: Xray artifact summary for a flagged artifact path from search results
+  - id: artifact_properties
+    description: Read artifact properties (build.name / build.number) on flagged docker if applicable
+  - id: build_info
+    description: GET build info for published lab build
+  - id: build_vcs_github
+    description: build-info contains GitHub repo URL and run metadata
+
+platform_cases:
+  A:
+    description: Manage Reports only
+    manage_reports: true
+    repo_read: none
+    build_read: false
+  B:
+    description: Repo Read only
+    manage_reports: false
+    repo_read: all_ecosystems
+    build_read: false
+  C:
+    description: Build Read only
+    manage_reports: false
+    repo_read: none
+    build_read: true
+  D:
+    description: Manage Reports + repo Read, no build Read
+    manage_reports: true
+    repo_read: all_ecosystems
+    build_read: false
+  E:
+    description: Manage Reports + build Read, no repo Read
+    manage_reports: true
+    repo_read: none
+    build_read: true
+  F:
+    description: Candidate least privilege — Manage Reports + repo Read + build Read
+    manage_reports: true
+    repo_read: all_ecosystems
+    build_read: true
+  G:
+    description: F plus Annotate, Manage Xray Metadata, Manage Policies, Manage Watches
+    manage_reports: true
+    repo_read: all_ecosystems
+    build_read: true
+    extras: true
+  H:
+    description: F but repo Read on npm local only
+    manage_reports: true
+    repo_read: npm_only
+    build_read: true
+  I:
+    description: F but build permission excludes isplt-lab-* builds
+    manage_reports: true
+    repo_read: all_ecosystems
+    build_read: true
+    build_exclude_pattern: "other**/**"
+
+project_cases:
+  prj_full:
+    description: Custom role Read Artifacts + Read Builds + Manage Reports
+    read_artifacts: true
+    read_builds: true
+    manage_reports: true
+    predefined_role: null
+  prj_noreports:
+    description: Same minus Manage Reports
+    read_artifacts: true
+    read_builds: true
+    manage_reports: false
+    predefined_role: null
+  prj_nobuild:
+    description: Same minus Read Builds
+    read_artifacts: true
+    read_builds: false
+    manage_reports: true
+    predefined_role: null
+  prj_noartifact:
+    description: Same minus Read Artifacts
+    read_artifacts: false
+    read_builds: true
+    manage_reports: true
+    predefined_role: null
+  prj_developer:
+    description: Predefined Developer project role
+    predefined_role: Developer
