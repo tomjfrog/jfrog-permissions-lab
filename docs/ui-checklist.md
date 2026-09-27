@@ -10,10 +10,11 @@ Perform each step logged in as the **persona user** for the case under test (not
 4. Confirm flagged npm artifact appears; open the resource link.
 5. Confirm Xray scan / component view loads (not 403 / empty).
 6. Repeat Impact Search for Maven `commons-lang3` / `maven` and npm `semver` for Docker-track image.
-7. Open **Artifactory → Builds** (or build link from artifact properties).
-8. Open build `isplt-lab-npm-flagged` (or latest number from publish workflow).
-9. Confirm Build Info shows VCS URL pointing at this GitHub repo and CI metadata.
-10. Follow VCS / env link to GitHub Actions run that published the build.
+7. From the artifact, read the `build.name` / `build.number` properties (or open a Build-type search result directly).
+8. Open that build under **Artifactory → Builds**.
+9. Confirm Build Info shows the **Build URL** (`https://github.com/tomjfrog/jfrog-permissions-lab/actions/runs/<id>`) and `GITHUB_*` environment values.
+10. Follow the Build URL to the GitHub Actions run that published the build.
+11. Deny check: open the `npm-remote-cache` semver hit from step 3 — expect no access for every non-admin persona.
 
 ## Project case (example `lab-prj-full`)
 

@@ -41,7 +41,7 @@ jobs:
       - name: Publish npm flagged
         working-directory: apps/npm-flagged
         run: |
-          jf npm install
+          jf npm install --build-name=isplt-lab-npm-flagged --build-number="${BUILD_NUMBER}"
           jf npm publish --build-name=isplt-lab-npm-flagged --build-number="${BUILD_NUMBER}"
           jf rt build-collect-env isplt-lab-npm-flagged "${BUILD_NUMBER}"
           jf rt build-publish isplt-lab-npm-flagged "${BUILD_NUMBER}"
@@ -49,7 +49,7 @@ jobs:
       - name: Publish npm clean
         working-directory: apps/npm-clean
         run: |
-          jf npm install
+          jf npm install --build-name=isplt-lab-npm-clean --build-number="${BUILD_NUMBER}"
           jf npm publish --build-name=isplt-lab-npm-clean --build-number="${BUILD_NUMBER}"
           jf rt build-collect-env isplt-lab-npm-clean "${BUILD_NUMBER}"
           jf rt build-publish isplt-lab-npm-clean "${BUILD_NUMBER}"
@@ -138,7 +138,8 @@ jobs:
         run: |
           jf npm-config --repo-deploy "${NPM_LOCAL}" --repo-resolve "${NPM_VIRTUAL}"
           cd apps/npm-flagged
-          jf npm install
+          jf npm install --build-name="${{ matrix.project_key }}-npm-flagged" \
+            --build-number="${BUILD_NUMBER}" --project="${{ matrix.project_key }}"
           jf npm publish --build-name="${{ matrix.project_key }}-npm-flagged" \
             --build-number="${BUILD_NUMBER}" --project="${{ matrix.project_key }}"
           jf rt build-collect-env "${{ matrix.project_key }}-npm-flagged" "${BUILD_NUMBER}" \

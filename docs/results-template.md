@@ -18,22 +18,22 @@ SBOM service enabled: yes / no
 
 ## Platform track
 
-| Case | Persona | impact_search | xray_summary | artifact_props | build_info | vcs_github | Notes |
-|------|---------|---------------|--------------|----------------|------------|--------------|-------|
-| A | lab-plt-a | | | | | | |
-| B | lab-plt-b | | | | | | |
-| C | lab-plt-c | | | | | | |
-| D | lab-plt-d | | | | | | |
-| E | lab-plt-e | | | | | | |
-| F | lab-plt-f | | | | | | |
-| G | lab-plt-g | | | | | | |
-| H | lab-plt-h | | | | | | |
-| I | lab-plt-i | | | | | | |
+| Case | Persona | impact_search | xray_summary | artifact_props | build_info | ci_run_url | out_of_scope denied | Notes |
+|------|---------|---------------|--------------|----------------|------------|------------|---------------------|-------|
+| A | lab-plt-a | | | | | | | |
+| B | lab-plt-b | | | | | | | |
+| C | lab-plt-c | | | | | | | |
+| D | lab-plt-d | | | | | | | |
+| E | lab-plt-e | | | | | | | |
+| F | lab-plt-f | | | | | | | |
+| G | lab-plt-g | | | | | | | |
+| H | lab-plt-h | | | | | | | |
+| I | lab-plt-i | | | | | | | |
 
 ## Project track
 
-| Case | Persona | Project | impact_search | xray_summary | build_info | vcs_github | Notes |
-|------|---------|---------|---------------|--------------|------------|--------------|-------|
+| Case | Persona | Project | impact_search | xray_summary | build_info | ci_run_url | Notes |
+|------|---------|---------|---------------|--------------|------------|------------|-------|
 | prj_full | lab-prj-full | isplt-prj-full | | | | | |
 | prj_noreports | lab-prj-noreports | isplt-prj-noreports | | | | | |
 | prj_nobuild | lab-prj-nobuild | isplt-prj-nobuild | | | | | |

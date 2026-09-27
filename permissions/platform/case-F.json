@@ -6,7 +6,7 @@
       "actions": { "users": { "lab-plt-f": ["READ"] }, "groups": {} }
     },    "build": {
       "targets": {
-        "isplt-lab**/**": { "include_patterns": ["**"], "exclude_patterns": [] }
+        "artifactory-build-info": { "include_patterns": ["isplt-lab-*/**"], "exclude_patterns": [] }
       },
       "actions": { "users": { "lab-plt-f": ["READ"] }, "groups": {} }
     }

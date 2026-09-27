@@ -1,10 +1,13 @@
 {
-  "username": "lab-plt-a",
-  "email": "lab-plt-a@labs.invalid",
-  "admin": false,
   "matrix_case": "A",
-  "xray_global_roles": [
-    "Manage Reports"
-  ],
-  "access_permission": null
+  "access_permission": null,
+  "user": {
+    "username": "lab-plt-a",
+    "email": "lab-plt-a@labs.invalid",
+    "admin": false,
+    "groups": [],
+    "reports_manager": true,
+    "watch_manager": false,
+    "policy_manager": false
+  }
 }

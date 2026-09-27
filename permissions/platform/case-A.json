@@ -1,4 +1,1 @@
-{
-  "name": "isplt-plt-A",
-  "note": "No artifact/build grants; assign Manage Reports on user lab-plt-a only"
-}
+{"name":"isplt-plt-A","note":"No artifact/build grants; reports_manager user flag only"}

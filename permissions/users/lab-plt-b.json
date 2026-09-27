@@ -1,8 +1,13 @@
 {
-  "username": "lab-plt-b",
-  "email": "lab-plt-b@labs.invalid",
-  "admin": false,
   "matrix_case": "B",
-  "xray_global_roles": [],
-  "access_permission": "permissions/platform/case-B.json"
+  "access_permission": "permissions/platform/case-B.json",
+  "user": {
+    "username": "lab-plt-b",
+    "email": "lab-plt-b@labs.invalid",
+    "admin": false,
+    "groups": [],
+    "reports_manager": false,
+    "watch_manager": false,
+    "policy_manager": false
+  }
 }

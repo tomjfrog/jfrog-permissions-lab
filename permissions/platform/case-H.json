@@ -2,13 +2,11 @@
   "name": "isplt-plt-H",
   "resources": {
     "artifact": {
-      "targets": {
-        "isplt-npm-local": { "include_patterns": ["**"], "exclude_patterns": [] }
-      },
+      "targets": { "isplt-npm-local": {"include_patterns": ["**"], "exclude_patterns": []} },
       "actions": { "users": { "lab-plt-h": ["READ"] }, "groups": {} }
     },    "build": {
       "targets": {
-        "isplt-lab**/**": { "include_patterns": ["**"], "exclude_patterns": [] }
+        "artifactory-build-info": { "include_patterns": ["isplt-lab-*/**"], "exclude_patterns": [] }
       },
       "actions": { "users": { "lab-plt-h": ["READ"] }, "groups": {} }
     }

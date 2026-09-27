@@ -2,6 +2,12 @@
   "name": "Security Analyst Lab",
   "description": "Read repos/builds without Manage Reports",
   "type": "CUSTOM",
-  "environments": ["DEV", "PROD"],
-  "actions": ["READ_REPOSITORY", "READ_BUILD"]
+  "environments": [
+    "DEV",
+    "PROD"
+  ],
+  "actions": [
+    "READ_REPOSITORY",
+    "READ_BUILD"
+  ]
 }

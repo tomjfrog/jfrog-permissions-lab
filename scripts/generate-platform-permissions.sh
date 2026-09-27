@@ -3,97 +3,75 @@
 set -euo pipefail
 
 REPOS=(isplt-npm-local isplt-maven-local isplt-docker-local)
-BUILD_PATTERN='isplt-lab**/**'
+# Build permissions target the build-info repo; build names are matched as "<name>/**" paths inside it.
+BUILD_REPO='artifactory-build-info'
+LAB_BUILDS='isplt-lab-*/**'
 
-artifact_targets_all() {
-  local u=$1
-  local -a actions=()
-  for r in "${REPOS[@]}"; do
-    actions+=("\"$r\": {\"include_patterns\": [\"**\"], \"exclude_patterns\": []}")
+artifact_targets() {
+  local u=$1 actions=$2
+  shift 2
+  local -a parts=()
+  for r in "$@"; do
+    parts+=("\"$r\": {\"include_patterns\": [\"**\"], \"exclude_patterns\": []}")
   done
   local targets
-  targets=$(IFS=,; echo "${actions[*]}")
+  targets=$(IFS=,; echo "${parts[*]}")
   cat <<EOF
     "artifact": {
       "targets": { $targets },
-      "actions": { "users": { "$u": ["READ"] }, "groups": {} }
+      "actions": { "users": { "$u": $actions }, "groups": {} }
     }
 EOF
 }
 
-artifact_targets_npm_only() {
-  local u=$1
+build_targets() {
+  local u=$1 actions=$2 include=$3 exclude=${4:-}
+  local exclude_json='[]'
+  [[ -n "$exclude" ]] && exclude_json="[\"$exclude\"]"
   cat <<EOF
-    "artifact": {
-      "targets": {
-        "isplt-npm-local": { "include_patterns": ["**"], "exclude_patterns": [] }
-      },
-      "actions": { "users": { "$u": ["READ"] }, "groups": {} }
-    }
-EOF
-}
-
-build_read() {
-  local u=$1
-  local exclude=${2:-}
-  if [[ -n "$exclude" ]]; then
-    cat <<EOF
     "build": {
       "targets": {
-        "$BUILD_PATTERN": {
-          "include_patterns": ["**"],
-          "exclude_patterns": ["$exclude"]
-        }
+        "$BUILD_REPO": { "include_patterns": ["$include"], "exclude_patterns": $exclude_json }
       },
-      "actions": { "users": { "$u": ["READ"] }, "groups": {} }
+      "actions": { "users": { "$u": $actions }, "groups": {} }
     }
 EOF
-  else
-    cat <<EOF
-    "build": {
-      "targets": {
-        "$BUILD_PATTERN": { "include_patterns": ["**"], "exclude_patterns": [] }
-      },
-      "actions": { "users": { "$u": ["READ"] }, "groups": {} }
-    }
-EOF
-  fi
 }
 
 write_case() {
-  local case=$1 user=$2
-  shift 2
+  local case=$1
+  shift
   local file="permissions/platform/case-${case}.json"
   {
     echo '{'
     echo "  \"name\": \"isplt-plt-${case}\","
     echo '  "resources": {'
-    local parts=()
-    while [[ $# -gt 0 ]]; do
-      parts+=("$1")
-      shift
-    done
     local IFS=$',\n'
-    echo "${parts[*]}"
+    echo "$*"
     echo '  }'
     echo '}'
   } > "$file"
+  jq empty "$file"
   echo "wrote $file"
 }
 
 mkdir -p permissions/platform
 
-write_case B lab-plt-b "$(artifact_targets_all lab-plt-b)"
-write_case C lab-plt-c "$(build_read lab-plt-c)"
-write_case D lab-plt-d "$(artifact_targets_all lab-plt-d)"
-write_case E lab-plt-e "$(build_read lab-plt-e)"
-write_case F lab-plt-f "$(artifact_targets_all lab-plt-f),$(build_read lab-plt-f)"
-write_case G lab-plt-g "$(artifact_targets_all lab-plt-g),$(build_read lab-plt-g)"
-write_case H lab-plt-h "$(artifact_targets_npm_only lab-plt-h),$(build_read lab-plt-h)"
-write_case I lab-plt-i "$(artifact_targets_all lab-plt-i),$(build_read lab-plt-i 'isplt-lab**/**')"
+R='["READ"]'
+RA='["READ", "ANNOTATE"]'
 
-# Case A: no Access permission target (Xray role only) — empty marker file
-echo '{"name":"isplt-plt-A","note":"No artifact/build grants; assign Manage Reports on user only"}' \
+write_case B "$(artifact_targets lab-plt-b "$R" "${REPOS[@]}")"
+write_case C "$(build_targets lab-plt-c "$R" "$LAB_BUILDS")"
+write_case D "$(artifact_targets lab-plt-d "$R" "${REPOS[@]}")"
+write_case E "$(build_targets lab-plt-e "$R" "$LAB_BUILDS")"
+write_case F "$(artifact_targets lab-plt-f "$R" "${REPOS[@]}"),$(build_targets lab-plt-f "$R" "$LAB_BUILDS")"
+# G: Manage Xray Metadata is added in the UI after POST (see docs/apply-tomjpd2.md); Watches/Policies are user flags.
+write_case G "$(artifact_targets lab-plt-g "$RA" "${REPOS[@]}"),$(build_targets lab-plt-g "$RA" "$LAB_BUILDS")"
+write_case H "$(artifact_targets lab-plt-h "$R" isplt-npm-local),$(build_targets lab-plt-h "$R" "$LAB_BUILDS")"
+write_case I "$(artifact_targets lab-plt-i "$R" "${REPOS[@]}"),$(build_targets lab-plt-i "$R" '**' "$LAB_BUILDS")"
+
+# Case A: no Access permission target (reports_manager user flag only) — marker file
+echo '{"name":"isplt-plt-A","note":"No artifact/build grants; reports_manager user flag only"}' \
   > permissions/platform/case-A.json
 
-echo "Done. Assign xray_global_roles per permissions/users/*.json in apply runbook."
+echo "Done. Xray role flags (reports_manager etc.) live in permissions/users/*.json."

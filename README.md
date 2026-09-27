@@ -33,6 +33,7 @@ Shared artifact repos and build names use the `isplt-` prefix (lab namespace on 
 | [`harness/journey.sh`](harness/journey.sh) | Run analyst API journey as a persona token |
 | [`permissions/`](permissions/) | V2 permission bodies, project roles, user specs |
 | [`apps/`](apps/) | Sample npm / Maven / Docker projects |
+| [`docs/next-steps.md`](docs/next-steps.md) | Current checklist: what each step does, proves, and how to run it |
 | [`docs/apply-tomjpd2.md`](docs/apply-tomjpd2.md) | Provision tomjpd2 |
 | [`docs/teardown-tomjpd2.md`](docs/teardown-tomjpd2.md) | Remove lab resources |
 | [`docs/ui-checklist.md`](docs/ui-checklist.md) | Manual UI parity with harness |
@@ -44,7 +45,7 @@ Shared artifact repos and build names use the `isplt-` prefix (lab namespace on 
 2. **Platform repos on tomjpd2:** `bash scripts/provision-platform-repos.sh` (must run before GitHub publish).
 3. Apply users, permissions, projects: follow [`docs/apply-tomjpd2.md`](docs/apply-tomjpd2.md).
 4. Run GitHub Actions workflow **Publish lab artifacts** (`workflow_dispatch`).
-5. Wait for Xray indexing and scans on lab repos.
+5. Index the lab builds in Xray (`bash scripts/index-lab-builds.sh`), re-run the workflow, and verify Impact Search coverage as admin ([apply step 8](docs/apply-tomjpd2.md#8-verify-coverage-as-admin)).
 6. Create persona tokens (runbook) and run:
 
 ```bash

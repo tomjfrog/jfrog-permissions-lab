@@ -2,6 +2,8 @@
 
 All commands use **`--server-id tomjpd2`**. Run from repo root with admin credentials in `jf config`.
 
+Order matters: Xray can only index builds that exist, and personas must be verified clean before any result is trusted.
+
 ## 1. Bootstrap config
 
 ```bash
@@ -14,13 +16,9 @@ bash scripts/generate-user-specs.sh
 
 **Required before the GitHub publish workflow** — otherwise `jf npm-config` fails with `The repository 'isplt-npm' does not exist`.
 
-From repo root (admin `jf` login to tomjpd2):
-
 ```bash
 bash scripts/provision-platform-repos.sh
 ```
-
-Creates:
 
 | Key | Type |
 |-----|------|
@@ -29,90 +27,116 @@ Creates:
 
 Override remotes: `LAB_NPM_REMOTE=… LAB_MAVEN_REMOTE=… bash scripts/provision-platform-repos.sh`
 
-Manual creation via UI or REST is fine; match keys in [`lab/config.example.yaml`](../lab/config.example.yaml).
-
 ## 3. Create persona users
 
-For each file in `permissions/users/lab-plt-*.json` and `lab-prj-*.json`:
+Each `permissions/users/*.json` has a `.user` object that is the request body for [Create User](https://docs.jfrog.com/administration/reference/createuser.md). It carries the Xray role flags directly (`reports_manager`, `watch_manager`, `policy_manager`, Artifactory 7.128.0+) — no UI step for Manage Reports.
 
 ```bash
-USER=lab-plt-f
-jf api --server-id tomjpd2 POST /access/api/v2/users/ \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"${USER}\",\"email\":\"${USER}@labs.invalid\",\"password\":\"<set-secure>\",\"admin\":false}"
+for f in permissions/users/lab-*.json; do
+  U=$(jq -r .user.username "$f")
+  PW="<from vault for ${U}>"
+  jq --arg pw "$PW" '.user + {password: $pw}' "$f" \
+    | jq -c . | jf api --server-id tomjpd2 -X POST /access/api/v2/users \
+        -H "Content-Type: application/json" --input -
+done
 ```
 
 Store passwords in a team vault; do not commit.
 
-## 4. Assign platform Xray roles (Manage Reports)
+### 3a. Strip auto-join groups (required)
 
-Platform personas **A, D–I** need global **Manage Reports** (Reports Manager). Assign in **Administration → User Management → Users →** select user → **Global Roles** (or equivalent) → enable **Manage Reports**.
-
-Cases **B, C, E** omit Manage Reports per matrix.
-
-Project-track personas receive Manage Reports via **project custom role** except `isplt-prj-noreports`.
-
-## 5. Apply Permissions V2 (platform track)
-
-For each `permissions/platform/case-*.json` with a `resources` object:
+On tomjpd2 the `readers` group is **auto-join**, and the built-in **`Anything`** permission grants `readers` Read on every repository and every build. A persona left in `readers` passes the whole journey regardless of its case, which invalidates the matrix.
 
 ```bash
-jf api --server-id tomjpd2 POST /access/api/v2/permissions \
-  -H "Content-Type: application/json" \
-  --input permissions/platform/case-F.json
+for f in permissions/users/lab-*.json; do
+  U=$(jq -r .user.username "$f")
+  G=$(jf api --server-id tomjpd2 "/access/api/v2/users/${U}" | jq -c '.groups // []')
+  if [[ "$G" != "[]" ]]; then
+    echo "removing ${U} from ${G}"
+    jq -nc --argjson g "$G" '{add: [], remove: $g}' \
+      | jf api --server-id tomjpd2 -X PATCH "/access/api/v2/users/${U}/groups" \
+          -H "Content-Type: application/json" --input -
+  fi
+done
+```
+
+Re-run the loop; every persona must report no groups before continuing.
+
+## 4. Apply Permissions V2 (platform track)
+
+Build targets use the `artifactory-build-info` repository key with build-name patterns inside it (`isplt-lab-*/**`).
+
+```bash
+for c in B C D E F G H I; do
+  jf api --server-id tomjpd2 -X POST /access/api/v2/permissions \
+    -H "Content-Type: application/json" --input "permissions/platform/case-${c}.json"
+done
 ```
 
 Case **A** has no resource grants — skip POST.
 
-## 6. Create JFrog Projects (project track)
-
-For each directory under `permissions/project/isplt-prj-*`:
+**Case G only:** after POST, add **Manage Xray Metadata** to `isplt-plt-G` (artifact and build resources) in **Administration → User Management → Permissions**, then capture the action string it stores so the JSON can be updated:
 
 ```bash
-PK=isplt-prj-full
-jf api --server-id tomjpd2 POST /access/api/v1/projects \
-  -H "Content-Type: application/json" \
-  --input "permissions/project/${PK}/project.json"
+jf api --server-id tomjpd2 /access/api/v2/permissions/isplt-plt-G | jq '.resources | map_values(.actions)'
 ```
 
-Create repos `${PK}-npm-local`, `${PK}-npm` (virtual), assign `projectKey`, index for Xray.
-
-Create custom role (except Developer-only project):
+## 5. Create JFrog Projects (project track)
 
 ```bash
-jf api --server-id tomjpd2 POST "/access/api/v1/projects/${PK}/roles" \
-  -H "Content-Type: application/json" \
-  --input "permissions/project/${PK}/role-security-analyst.json"
+for PK in isplt-prj-full isplt-prj-noreports isplt-prj-nobuild isplt-prj-noartifact isplt-prj-developer; do
+  jf api --server-id tomjpd2 -X POST /access/api/v1/projects \
+    -H "Content-Type: application/json" --input "permissions/project/${PK}/project.json"
+  if [[ -f "permissions/project/${PK}/role-security-analyst.json" ]]; then
+    jf api --server-id tomjpd2 -X POST "/access/api/v1/projects/${PK}/roles" \
+      -H "Content-Type: application/json" --input "permissions/project/${PK}/role-security-analyst.json"
+  fi
+  U=$(jq -r .name "permissions/project/${PK}/member.json")
+  jf api --server-id tomjpd2 -X PUT "/access/api/v1/projects/${PK}/users/${U}" \
+    -H "Content-Type: application/json" --input "permissions/project/${PK}/member.json"
+done
 ```
 
-Add member:
+Project role actions on tomjpd2: Read Artifacts = `READ_REPOSITORY`, Read Builds = `READ_BUILD`, Manage Reports = `REPORTS_SECURITY`. List valid actions with `jf api --server-id tomjpd2 "/access/api/v1/projects/${PK}/roles"`.
+
+Then create the project repos:
 
 ```bash
-jf api --server-id tomjpd2 PUT "/access/api/v1/projects/${PK}/users/lab-prj-full" \
-  -H "Content-Type: application/json" \
-  --input "permissions/project/${PK}/member.json"
+bash scripts/provision-project-repos.sh
 ```
 
-If `MANAGE_XRAY_REPORTS` is rejected, list valid actions:
+If the `${PK}-npm` virtual is rejected, share `npm-remote` with the lab projects first (Administration → Repositories → `npm-remote` → Share with projects).
+
+## 6. Publish artifacts
+
+Configure GitHub `vars.JF_URL` and OIDC secrets ([`github-setup.md`](github-setup.md)), then run **Publish lab artifacts**:
+
+1. `track=platform` — shared haystack repos.
+2. `track=projects` — npm flagged build per project.
+
+## 7. Index builds in Xray
+
+Repo indexing alone is not enough: the npm package and Maven jar carry no dependency graph of their own, so `semver` and `commons-lang3` only surface through the **build** dependencies, and Impact Search returns Build results only for indexed builds.
 
 ```bash
-jf api --server-id tomjpd2 "/access/api/v1/projects/${PK}/roles"
+bash scripts/index-lab-builds.sh             # platform builds
+bash scripts/index-lab-builds.sh --projects  # plus project builds
 ```
 
-Match UI **Manage Reports** to the returned action name and update the role JSON.
+Then re-run the publish workflow once so the new build numbers are scanned.
 
-## 7. Publish artifacts
+## 8. Verify coverage as admin
 
-Configure GitHub `vars.JF_URL` and OIDC secrets, then run workflow **Publish lab artifacts**:
+Before creating persona tokens, confirm Impact Search returns a lab hit per ecosystem:
 
-1. `track=platform` — populates shared haystack repos.
-2. `track=projects` — publishes npm flagged build per project.
+```bash
+for q in "name=semver&type=npm&version=7.6.3" "name=commons-lang3&type=maven&namespace=org.apache.commons&version=3.14.0"; do
+  jf api --server-id tomjpd2 "/xray/api/v2/search/impactedResources?limit=100&${q}" \
+    | jq -c '[.result[] | {type, repo, name}]'
+done
+```
 
-Set `LAB_BUILD_NUMBER` to `${{ github.run_number }}` when running the harness.
-
-## 8. Wait for Xray
-
-Confirm scans completed (UI or `jf rt build-scan` logs). Impact Search requires SBOM service enabled ([Impact Search docs](https://docs.jfrog.com/security/docs/impact-search-1)).
+Expect the docker-flagged manifest plus Build results for `isplt-lab-npm-flagged`, `isplt-lab-docker-flagged`, and `isplt-lab-maven-flagged`. The `npm-remote-cache` hit is intentional — the harness uses it as a deny check.
 
 ## 9. Issue persona tokens
 
@@ -126,9 +150,7 @@ Save tokens under `lab/tokens/` (gitignored).
 
 ```bash
 export LAB_TOKEN="$(cat lab/tokens/lab-plt-f.token)"
-export LAB_BUILD_NUMBER=1
-export JF_URL=https://<tomjpd2-host>
 ./harness/journey.sh --case plt-f --config lab/config.yaml
 ```
 
-Record output in `docs/results-template.md`.
+The harness reads build name and number from the artifact's `build.name` / `build.number` properties, so no build number needs to be passed. Record output in `docs/results-template.md`.
