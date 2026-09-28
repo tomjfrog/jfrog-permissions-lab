@@ -20,6 +20,8 @@ Case G (F + Annotate + Manage Xray Metadata + Manage Watches + Manage Policies) 
 
 When Impact Search returns the **Build** itself (npm and Maven in this lab), **Manage Reports + Build Read** is sufficient (case E). Repo Read is only required when the analyst starts from an **artifact** hit (Docker here).
 
+**Recommended API chain (curl + script):** [docs/analyst-api-chain.md](docs/analyst-api-chain.md) — Impact Search → artifact properties or Build hit → Build Info → `buildInfo.url`. Runnable helper: `scripts/find_ci_runs.py`.
+
 ## Key findings
 
 1. **The customer's failure signature is reproduced by case D** (Manage Reports + Repo Read, no Build Read). Search, Xray summary, and artifact properties all succeed; the last hop fails with:
