@@ -65,11 +65,14 @@ MVN_NAME="org.apache.commons:commons-lang3"; MVN_VER="3.14.0"
 
 PROJECT_KEY=""
 PROJECT_QS=""
+SEARCH_PROJECT_QS=""
 LAB_REPO_RE='^isplt-(npm|maven|docker)-local$'
 LAB_BUILD_RE='^isplt-lab-'
 if [[ "$CASE" == prj-* ]]; then
-  PROJECT_KEY="isplt-${CASE}"
+  PROJECT_KEY="isplt-$(cut -d- -f1-2 <<<"$CASE")"
   PROJECT_QS="?project=${PROJECT_KEY}"
+  # A project role's REPORTS_SECURITY only applies when Impact Search names the project; without it the search is platform-level (403).
+  SEARCH_PROJECT_QS="&projectKey=${PROJECT_KEY}"
   LAB_REPO_RE="^${PROJECT_KEY}-"
   LAB_BUILD_RE="^${PROJECT_KEY}-"
 fi
@@ -104,7 +107,7 @@ uri() { printf %s "$1" | jq -sRr @uri; }
 
 impact_search() {
   local label=$1 qs=$2
-  http_call GET "/xray/api/v2/search/impactedResources?limit=100&${qs}"
+  http_call GET "/xray/api/v2/search/impactedResources?limit=100&${qs}${SEARCH_PROJECT_QS}"
   cp "$BODY" "${OUT_DIR}/impact-${label}.json"
   SEARCH_CODE=$CODE
 }
@@ -179,9 +182,16 @@ follow_artifact() {
 
 follow_build_hits() {
   local ecosystem=$1 file=$2
-  local n=0
+  local n=0 cross_done=0
   while IFS=$'\t' read -r bname bnum; do
-    [[ -n "$bname" && "$bname" =~ $LAB_BUILD_RE ]] || continue
+    [[ -n "$bname" ]] || continue
+    if [[ -n "$PROJECT_KEY" && $cross_done == 0 && ! "$bname" =~ $LAB_BUILD_RE && "$bname" =~ ^(isplt-prj-[a-z]+)- ]]; then
+      cross_done=1
+      http_call GET "/artifactory/api/build/$(uri "$bname")/$(uri "$bnum")?project=${BASH_REMATCH[1]}"
+      log_step "cross_project_build:${ecosystem}" "$CODE" "${bname}/${bnum}?project=${BASH_REMATCH[1]} (deny expected)"
+      continue
+    fi
+    [[ "$bname" =~ $LAB_BUILD_RE ]] || continue
     n=$((n + 1))
     fetch_build "${ecosystem}-build${n}" "$bname" "$bnum"
   done < <(jq -r '.result[]? | select(.type=="Build")

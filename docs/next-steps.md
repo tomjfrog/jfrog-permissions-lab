@@ -101,27 +101,29 @@ Each step lists **Intent** (what it does), **Proves** (what a pass tells you), a
 
 ## Phase 3 — Project track
 
-- [ ] **13. Create projects, roles, members, and project repos**
+- [x] **13. Create projects, roles, members, and project repos**
   - **Intent:** one isolated project per project case.
   - **Proves:** the role JSON is accepted (confirms `REPORTS_SECURITY` etc.).
   - **How:** runbook §5 (users from step 5 must include `lab-prj-*`, stripped per step 6), then `bash scripts/provision-project-repos.sh`. If the virtual repo is rejected, share `npm-remote` with the lab projects and re-run.
+  - **Result:** all accepted; roles read back with the expected actions. `lab-prj-*` users came back with `groups: []` (the create body sets it explicitly), so no strip was needed. `npm-remote` is already shared with all projects (`autoShare=true`), so no share step was needed — but this means project roles with `READ_REPOSITORY` may be able to read `npm-remote-cache`, which the harness uses as the out-of-scope deny check. Read a `prj-*` `out_of_scope_artifact` 200 with that in mind.
 
-- [ ] **14. Publish and index project builds**
+- [x] **14. Publish and index project builds** — build 8 (run 36364930954, published after indexing) records `semver:7.6.3` and the run URL in every project
   - **Intent:** put flagged npm builds into each `<project>-build-info` and make them searchable.
   - **Proves:** nothing yet (setup).
   - **How:** `gh workflow run "Publish lab artifacts" -f track=projects --repo tomjfrog/jfrog-permissions-lab`, then `bash scripts/index-lab-builds.sh --projects`, then publish once more so indexed builds get scanned.
 
-- [ ] **15. Admin coverage check for projects (gate)**
+- [x] **15. Admin coverage check for projects (gate)**
   - **Intent:** same as step 4, per project.
   - **Proves:** each project has a findable build that links to its run.
   - **How:** runbook §8 query; expect Build results named `isplt-prj-*-npm-flagged`.
+  - **Result:** pass — all five `isplt-prj-*-npm-flagged/8` Build hits (repo `<pk>-build-info`). Adding `projectKey=<pk>` to the search does not scope it: every project returns the same global list (platform builds, all five project builds, docker manifests, `npm-remote-cache`). There are no Artifact hits in the project npm locals (the tarball has no dependency graph), so project cases exercise the Build-hit route only.
 
-- [ ] **16. Run the harness for project cases**
+- [x] **16. Run the harness for project cases** — results in `RESULTS.md`; needed `projectKey=<pk>` on Impact Search (now in the harness)
   - **Intent:** measure the project-role equivalents.
   - **Proves:** the least-privilege project role, and that platform-level grants aren't needed for project-scoped builds.
   - **How:** tokens as in step 10 for `lab-prj-*`, then `--case prj-full`, `prj-noreports`, `prj-nobuild`, `prj-noartifact`, `prj-developer`. Expected: `prj-full` passes all; `noreports` fails search; `nobuild` fails build info; `noartifact` fails artifact hops; `developer` records whether it passes without Manage Reports.
 
-- [ ] **17. Cross-project isolation check**
+- [x] **17. Cross-project isolation check** — API: every persona got 403 on another project's build (harness step `cross_project_build`); the UI check is not done
   - **Intent:** as `lab-prj-full`, try to open `isplt-prj-developer` artifacts and builds.
   - **Proves:** project roles don't bleed across projects (Impact Search results and opens stay scoped).
   - **How:** UI checklist project step 4, or `curl` the other project's build with `?project=isplt-prj-developer` using the `lab-prj-full` token; expect a denial.

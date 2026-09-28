@@ -101,7 +101,7 @@ Then create the project repos:
 bash scripts/provision-project-repos.sh
 ```
 
-If the `${PK}-npm` virtual is rejected, share `npm-remote` with the lab projects first (Administration → Repositories → `npm-remote` → Share with projects).
+On tomjpd2 `npm-remote` is already shared with all projects (`autoShare=true`), so the virtuals are accepted as-is; a per-project share returns 400 "already shared with all projects". On other JPDs, if the `${PK}-npm` virtual is rejected, share it first: `PUT /access/api/v1/projects/_/share/repositories/npm-remote/${PK}`.
 
 ## 6. Publish artifacts
 

@@ -1,6 +1,6 @@
 # Impact Search analyst permissions — results
 
-**JPD:** `tomjpd2` (https://tomjpd2.jfrog.io) · **Date:** 2026-09-27 · **Status:** platform track complete (API); UI parity and project track pending.
+**JPD:** `tomjpd2` (https://tomjpd2.jfrog.io) · **Date:** 2026-09-27 · **Status:** platform track complete (API + UI); project track complete (API).
 
 ## Question
 
@@ -63,6 +63,34 @@ Direct probes (npm build 5 / Maven build 5 / Docker manifest properties): A ❌�
 
 Raw evidence: `harness/out/plt-{a..i}-179055*/` (`summary.json` plus each response body).
 
+## Project track results
+
+Each persona is a member of one project (`isplt-prj-<case>`) through a project role, with no platform grants, no Xray user flags, and no groups. Each project has an npm local + virtual and a flagged npm build (`isplt-prj-<case>-npm-flagged/8`) that records `semver:7.6.3` and the Actions run URL.
+
+**Least-privilege project role:** Read Artifacts is not needed for the Build route. **Manage Reports (`REPORTS_SECURITY`) + Read Builds (`READ_BUILD`)** completes Impact Search → Build hit → Build Info → CI run URL — the project equivalent of platform case E. Add Read Artifacts (`READ_REPOSITORY`) for artifact hits; in this lab the project npm locals produce no artifact hits (the tarball has no dependency graph), so that hop was not exercised on the project track.
+
+| Case | Role actions | Impact Search (`projectKey`) | Own build → CI URL | Other project's build | Remote-cache hit |
+|------|--------------|------------------------------|--------------------|-----------------------|------------------|
+| `prj-full` | READ_REPOSITORY, READ_BUILD, REPORTS_SECURITY | ✅ | ✅ → ✅ | ❌ | ✅ (shared remote) |
+| `prj-noreports` | READ_REPOSITORY, READ_BUILD | ❌ | — | — | — |
+| `prj-nobuild` | READ_REPOSITORY, REPORTS_SECURITY | ✅ | ❌ → — | ❌ | ✅ (shared remote) |
+| `prj-noartifact` | READ_BUILD, REPORTS_SECURITY | ✅ | ✅ → ✅ | ❌ | ❌ |
+| `prj-developer` | built-in Developer | ❌ | — | — | — |
+
+Raw evidence: `harness/out/prj-*-17905584*/`.
+
+### Project track findings
+
+7. **Project Manage Reports only works when the search names the project.** `GET /xray/api/v2/search/impactedResources` must include `projectKey=<project>`. Without it the search is platform-level and a project-only analyst gets **403** even with `REPORTS_SECURITY`. `project=`, `project_key=`, and an `X-JFrog-Project` header all still return 403. Expected UI equivalent (not yet verified): the analyst must run Impact Search with the project selected, not from the platform view.
+
+8. **Project-scoped search is still not permission-filtered.** With `projectKey`, a project analyst receives the same global result list as admin: platform builds, all five lab projects' builds, the Docker manifests, and remote-cache hits. Names outside the project are visible; opening them is not.
+
+9. **Build isolation holds.** Every persona got 403 "not authorized to access build info" on another project's build, including `prj-full`. Missing `READ_BUILD` fails the same way on the persona's own build (`prj-nobuild`), matching platform case D.
+
+10. **The built-in Developer role cannot search.** It lacks Manage Reports, so the journey stops at Impact Search.
+
+11. **Shared remotes leak artifact reads into project roles.** `npm-remote` is shared with all projects (`autoShare=true`), so `READ_REPOSITORY` lets project analysts open `npm-remote-cache` hits; `mavencentral-remote-cache` behaved the same way. This is expected sharing behaviour rather than a cross-project leak, but it widens what a project analyst can open beyond the project's own repos.
+
 ## How the lab is set up
 
 - **Haystack:** `isplt-{npm,maven,docker}-local` (Xray-indexed) behind virtuals; flagged and clean apps for each ecosystem, published by GitHub Actions (`Publish lab artifacts`) with build-info, `build-collect-env`, and artifact `build.name`/`build.number` properties.
@@ -96,7 +124,9 @@ Raw evidence: `harness/out/plt-{a..i}-179055*/` (`summary.json` plus each respon
 
 - [x] **UI parity (next-steps step 12):** click-through as `lab-plt-a`, `-d`, `-f`, `-h` done manually in the UI.
 - [ ] **Research `lab-plt-h` in the UI:** the case H click-through (Repo Read on npm local only) was harder to complete than the others. Work out what the UI does differently from the API result above (Docker route soft-denied, npm/Maven Build hits open).
-- [ ] **Project track (steps 13–17):** projects, custom roles (`READ_REPOSITORY`, `READ_BUILD`, `REPORTS_SECURITY`), project repos and builds, project-scoped runs, cross-project isolation.
+- [x] **Project track (steps 13–17):** see "Project track results". The harness now adds `projectKey` to Impact Search for `prj-*` cases and opens one other project's build as an isolation check.
+- [ ] **Project artifact route:** not exercised, because project npm locals produce no artifact hits. To test `READ_REPOSITORY` on the artifact route, add a project Docker image (like `isplt-docker-flagged`) to one project.
+- [ ] **Project UI parity:** confirm the project-context Impact Search in the UI behaves as finding 7 describes.
 - [x] **Harness:** an Xray summary 200 with empty `artifacts` is logged with `denied: true` and a "soft deny" detail. Every step in `summary.json` now has a `denied` field (HTTP ≥ 400 unless overridden).
 - [x] **Harness guard:** `journey.sh` decodes `LAB_TOKEN`'s subject and refuses to run when it doesn't match the case (`plt-<x>[-suffix]` → `lab-plt-<x>`, `prj-<name>` → `lab-prj-<name>`). `admin-*` cases refuse persona tokens; other case names are rejected.
 - [ ] **Credentials:** revoke the persona tokens and remove `lab/tokens/` when testing is complete.
