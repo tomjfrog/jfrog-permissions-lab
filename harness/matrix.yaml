@@ -54,7 +54,7 @@ platform_cases:
     manage_reports: true
     repo_read: all_ecosystems
     build_read: true
-    extras: true  # ANNOTATE in JSON; Manage Xray Metadata via UI; watch_manager/policy_manager user flags
+    extras: true  # ANNOTATE + SCAN (Manage Xray Metadata) in JSON; watch_manager/policy_manager user flags
   H:
     description: F but repo Read on npm local only
     manage_reports: true

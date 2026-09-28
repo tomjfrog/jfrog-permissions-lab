@@ -9,7 +9,7 @@ Perform each step logged in as the **persona user** for the case under test (not
 3. Search package: `semver`, type `npm` (or use config red-flag coordinates).
 4. Confirm flagged npm artifact appears; open the resource link.
 5. Confirm Xray scan / component view loads (not 403 / empty).
-6. Repeat Impact Search for Maven `commons-lang3` / `maven` and npm `semver` for Docker-track image.
+6. Repeat Impact Search for Maven `org.apache.commons:commons-lang3` / `maven` and npm `semver` for Docker-track image.
 7. From the artifact, read the `build.name` / `build.number` properties (or open a Build-type search result directly).
 8. Open that build under **Artifactory → Builds**.
 9. Confirm Build Info shows the **Build URL** (`https://github.com/tomjfrog/jfrog-permissions-lab/actions/runs/<id>`) and `GITHUB_*` environment values.

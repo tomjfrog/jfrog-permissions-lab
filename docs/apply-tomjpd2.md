@@ -37,7 +37,7 @@ for f in permissions/users/lab-*.json; do
   PW="<from vault for ${U}>"
   jq --arg pw "$PW" '.user + {password: $pw}' "$f" \
     | jq -c . | jf api --server-id tomjpd2 -X POST /access/api/v2/users \
-        -H "Content-Type: application/json" --input -
+        -H "Content-Type: application/json" --input=-
 done
 ```
 
@@ -55,7 +55,7 @@ for f in permissions/users/lab-*.json; do
     echo "removing ${U} from ${G}"
     jq -nc --argjson g "$G" '{add: [], remove: $g}' \
       | jf api --server-id tomjpd2 -X PATCH "/access/api/v2/users/${U}/groups" \
-          -H "Content-Type: application/json" --input -
+          -H "Content-Type: application/json" --input=-
   fi
 done
 ```
@@ -75,11 +75,7 @@ done
 
 Case **A** has no resource grants — skip POST.
 
-**Case G only:** after POST, add **Manage Xray Metadata** to `isplt-plt-G` (artifact and build resources) in **Administration → User Management → Permissions**, then capture the action string it stores so the JSON can be updated:
-
-```bash
-jf api --server-id tomjpd2 /access/api/v2/permissions/isplt-plt-G | jq '.resources | map_values(.actions)'
-```
+**Case G:** Manage Xray Metadata is the V2 action `SCAN` (confirmed on tomjpd2 by saving it in the UI and reading it back), so `case-G.json` grants `READ`, `ANNOTATE`, `SCAN` with no UI step.
 
 ## 5. Create JFrog Projects (project track)
 
@@ -130,7 +126,7 @@ Then re-run the publish workflow once so the new build numbers are scanned.
 Before creating persona tokens, confirm Impact Search returns a lab hit per ecosystem:
 
 ```bash
-for q in "name=semver&type=npm&version=7.6.3" "name=commons-lang3&type=maven&namespace=org.apache.commons&version=3.14.0"; do
+for q in "name=semver&type=npm&version=7.6.3" "name=org.apache.commons:commons-lang3&type=maven&version=3.14.0"; do
   jf api --server-id tomjpd2 "/xray/api/v2/search/impactedResources?limit=100&${q}" \
     | jq -c '[.result[] | {type, repo, name}]'
 done

@@ -8,24 +8,24 @@ Each step lists **Intent** (what it does), **Proves** (what a pass tells you), a
 
 ## Phase 1 — Make the data searchable
 
-- [ ] **1. Commit and push the fixture fixes**
+- [x] **1. Commit and push the fixture fixes**
   - **Intent:** `workflow_dispatch` runs the workflow from the default branch, so the npm build-info fix must be on `main`.
   - **Proves:** nothing.
   - **How:** review `git diff`, commit, `git push`.
 
-- [ ] **2. Index the platform lab builds in Xray**
+- [x] **2. Index the platform lab builds in Xray**
   - **Intent:** Impact Search only returns Build results, and only sees `semver` in the npm build and `commons-lang3` in the Maven build, for indexed builds. Today all six are in `non_indexed_builds`.
   - **Proves:** nothing yet (setup).
   - **How:** `bash scripts/index-lab-builds.sh`
     Check: `jf api --server-id tomjpd2 /xray/api/v1/binMgr/default/builds | jq '.indexed_builds | map(select(startswith("isplt-lab-")))'` lists all six.
 
-- [ ] **3. Re-run Publish lab artifacts (platform)**
+- [x] **3. Re-run Publish lab artifacts (platform)**
   - **Intent:** produce a new build number where the npm build records `semver` as a dependency, and have Xray scan the now-indexed builds.
   - **Proves:** the npm dependency-capture fix works (npm-flagged build shows `semver:7.6.3` in `modules[].dependencies`).
   - **How:** `gh workflow run "Publish lab artifacts" -f track=platform --repo tomjfrog/jfrog-permissions-lab`, then
     `jf api --server-id tomjpd2 /artifactory/api/build/isplt-lab-npm-flagged/<N> | jq '[.buildInfo.modules[].dependencies[].id]'`
 
-- [ ] **4. Admin coverage check (gate)**
+- [x] **4. Admin coverage check (gate)**
   - **Intent:** confirm the haystack actually contains a needle for every ecosystem before any persona is tested. If admin can't find it, a persona failing proves nothing.
   - **Proves:** fixtures are valid: Impact Search returns the docker-flagged manifest plus Build results for the npm, Maven, and Docker lab builds, and each build carries the Actions run URL.
   - **How:** runbook §8, then the admin smoke run:
@@ -37,39 +37,39 @@ Each step lists **Intent** (what it does), **Proves** (what a pass tells you), a
 
 ## Phase 2 — Platform track personas
 
-- [ ] **5. Create the 9 platform persona users**
+- [x] **5. Create the 9 platform persona users**
   - **Intent:** one identity per matrix case, with Xray role flags (`reports_manager`, etc.) set at creation.
   - **Proves:** nothing (setup).
   - **How:** runbook §3 loop over `permissions/users/lab-plt-*.json`. Passwords go to your vault.
 
-- [ ] **6. Strip auto-join groups and verify**
+- [x] **6. Strip auto-join groups and verify**
   - **Intent:** remove personas from `readers`, which the built-in `Anything` permission grants Read on every repo and build.
   - **Proves:** personas start from zero access; without this every case passes like F.
   - **How:** runbook §3a; re-run until every persona reports `[]`:
     `for u in lab-plt-{a..i}; do echo "$u $(jf api --server-id tomjpd2 /access/api/v2/users/$u | jq -c .groups)"; done`
 
-- [ ] **7. Deny-baseline control run (before any permissions)**
+- [x] **7. Deny-baseline control run (before any permissions)**
   - **Intent:** run the harness as a persona with no grants and no Xray roles.
   - **Proves:** the harness reports denials correctly and nothing outside the lab grants access (such as another permission or anonymous access). Every step should be 403/skipped.
   - **How:** runbook §9 token for `lab-plt-b`, then `./harness/journey.sh --case plt-b-baseline`.
 
-- [ ] **8. Apply Permissions V2 for cases B–I**
+- [x] **8. Apply Permissions V2 for cases B–I**
   - **Intent:** create the resource grants per case.
   - **Proves:** the JSON is accepted by the Access API (target keys and actions are valid).
   - **How:** runbook §4. Read each back and compare:
     `jf api --server-id tomjpd2 /access/api/v2/permissions/isplt-plt-F | jq .resources`
 
-- [ ] **9. Case G extras**
+- [x] **9. Case G extras**
   - **Intent:** add Manage Xray Metadata (the V2 action name wasn't confirmed from docs or the JPD).
   - **Proves:** the real action string, so `generate-platform-permissions.sh` can be made fully code-driven.
   - **How:** UI → Permissions → `isplt-plt-G` → add Manage Xray Metadata on repos and builds; read back per runbook §4; put the string in the generator's `RA` actions.
 
-- [ ] **10. Issue persona tokens**
+- [x] **10. Issue persona tokens**
   - **Intent:** credentials for the harness, one per persona.
   - **Proves:** nothing.
   - **How:** `for u in lab-plt-{a..i}; do jf access-token-create $u --server-id tomjpd2 --description "lab harness" --expiry 864000 --format json | jq -r .access_token > lab/tokens/$u.token; done` (check that one token file is non-empty before looping over all nine)
 
-- [ ] **11. Run the harness for cases A–I**
+- [x] **11. Run the harness for cases A–I**
   - **Intent:** measure each hop of the journey per permission combination.
   - **Proves:** which permission each hop needs; F passing everything is the candidate least privilege.
   - **How:**
@@ -94,7 +94,7 @@ Each step lists **Intent** (what it does), **Proves** (what a pass tells you), a
 
     Every non-admin case should also show `out_of_scope_artifact` denied.
 
-- [ ] **12. UI parity for key cases (A, D, F, H)**
+- [x] **12. UI parity for key cases (A, D, F, H)** — done manually; case H flagged for further research (see `RESULTS.md` open items)
   - **Intent:** repeat the click-through in the Platform UI as the persona.
   - **Proves:** the UI behaves like the API. The customer experienced this through the UI, which can use different endpoints; any mismatch is itself a finding.
   - **How:** [`ui-checklist.md`](ui-checklist.md), with screenshots in `results-template.md`.

@@ -58,14 +58,14 @@ write_case() {
 mkdir -p permissions/platform
 
 R='["READ"]'
-RA='["READ", "ANNOTATE"]'
+RA='["READ", "ANNOTATE", "SCAN"]'
 
 write_case B "$(artifact_targets lab-plt-b "$R" "${REPOS[@]}")"
 write_case C "$(build_targets lab-plt-c "$R" "$LAB_BUILDS")"
 write_case D "$(artifact_targets lab-plt-d "$R" "${REPOS[@]}")"
 write_case E "$(build_targets lab-plt-e "$R" "$LAB_BUILDS")"
 write_case F "$(artifact_targets lab-plt-f "$R" "${REPOS[@]}"),$(build_targets lab-plt-f "$R" "$LAB_BUILDS")"
-# G: Manage Xray Metadata is added in the UI after POST (see docs/apply-tomjpd2.md); Watches/Policies are user flags.
+# G: SCAN is the V2 action for "Manage Xray Metadata"; Watches/Policies are user flags.
 write_case G "$(artifact_targets lab-plt-g "$RA" "${REPOS[@]}"),$(build_targets lab-plt-g "$RA" "$LAB_BUILDS")"
 write_case H "$(artifact_targets lab-plt-h "$R" isplt-npm-local),$(build_targets lab-plt-h "$R" "$LAB_BUILDS")"
 write_case I "$(artifact_targets lab-plt-i "$R" "${REPOS[@]}"),$(build_targets lab-plt-i "$R" '**' "$LAB_BUILDS")"

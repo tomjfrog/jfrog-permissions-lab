@@ -33,9 +33,35 @@ fi
 [[ -n "${JF_URL:-}" ]] || { echo "Set JF_URL or configure jf server-id tomjpd2" >&2; exit 1; }
 JF_URL="${JF_URL%/}"
 
+token_subject_user() {
+  local payload
+  payload=$(printf %s "$LAB_TOKEN" | cut -d. -f2 | tr '_-' '/+')
+  while (( ${#payload} % 4 )); do payload="${payload}="; done
+  printf %s "$payload" | base64 -d 2>/dev/null | jq -r '.sub // empty' 2>/dev/null | sed -n 's#^.*/users/##p'
+}
+
+# A persona case run with the wrong token (typically admin) silently passes every hop, so refuse it.
+TOKEN_USER=$(token_subject_user || true)
+[[ -n "$TOKEN_USER" ]] || { echo "Cannot read a user from LAB_TOKEN's subject; refusing to run" >&2; exit 1; }
+case "$CASE" in
+  admin-*)
+    if [[ "$TOKEN_USER" == lab-* ]]; then
+      echo "Case '${CASE}' is an admin run but LAB_TOKEN belongs to persona '${TOKEN_USER}'" >&2; exit 1
+    fi ;;
+  plt-[a-z]|plt-[a-z]-*) EXPECTED_USER="lab-plt-${CASE:4:1}" ;;
+  prj-*) EXPECTED_USER="lab-${CASE%%-*}-$(cut -d- -f2 <<<"$CASE")" ;;
+  *) echo "Unknown case prefix '${CASE}' (use admin-*, plt-<a..i>[-suffix], prj-<name>[-suffix])" >&2; exit 1 ;;
+esac
+if [[ -n "${EXPECTED_USER:-}" && "$TOKEN_USER" != "$EXPECTED_USER" ]]; then
+  echo "Case '${CASE}' expects token subject '${EXPECTED_USER}', but LAB_TOKEN belongs to '${TOKEN_USER}'" >&2
+  exit 1
+fi
+echo "Token subject: ${TOKEN_USER}"
+
 GITHUB_REPO="tomjfrog/jfrog-permissions-lab"
 NPM_NAME="semver";        NPM_VER="7.6.3"
-MVN_NAME="commons-lang3"; MVN_NS="org.apache.commons"; MVN_VER="3.14.0"
+# Xray names Maven packages groupId:artifactId; a bare artifactId (even with namespace=) matches nothing.
+MVN_NAME="org.apache.commons:commons-lang3"; MVN_VER="3.14.0"
 
 PROJECT_KEY=""
 PROJECT_QS=""
@@ -55,11 +81,13 @@ SUMMARY="${OUT_DIR}/summary.ndjson"
 BODY="${OUT_DIR}/.body"
 CODE=0
 
+# Optional 4th arg overrides `denied` (default: HTTP >= 400), for denials that arrive as 200.
 log_step() {
-  local step=$1 code=$2 detail=$3
-  jq -nc --arg step "$step" --argjson code "$code" --arg detail "$detail" \
-    '{step:$step,http_code:$code,detail:$detail}' >> "$SUMMARY"
-  printf "[%s] HTTP %s — %s\n" "$step" "$code" "$detail"
+  local step=$1 code=$2 detail=$3 denied=${4:-}
+  [[ -n "$denied" ]] || { (( code >= 400 )) && denied=true || denied=false; }
+  jq -nc --arg step "$step" --argjson code "$code" --arg detail "$detail" --argjson denied "$denied" \
+    '{step:$step,http_code:$code,denied:$denied,detail:$detail}' >> "$SUMMARY"
+  printf "[%s] HTTP %s%s — %s\n" "$step" "$code" "$([[ "$denied" == true ]] && echo " DENIED")" "$detail"
 }
 
 # Sets CODE; response body is left in $BODY.
@@ -125,9 +153,14 @@ follow_artifact() {
   payload=$(jq -nc --arg p "default/${repo}${rel}" '{paths:[$p]}')
   http_call POST /xray/api/v1/summary/artifact -d "$payload"
   cp "$BODY" "${OUT_DIR}/xray-summary-${label}.json"
-  local err
+  local err denied=""
   err=$(jq -r '[.errors[]?.error] | join("; ")' "$BODY" 2>/dev/null || true)
-  log_step "xray_summary:${label}" "$CODE" "${repo}${rel}${err:+ — $err}"
+  # Without Read on the repo, Xray answers 200 with an empty `artifacts` list instead of 403.
+  if [[ "$CODE" == 200 ]] && jq -e '(.artifacts // []) | length == 0' "$BODY" >/dev/null 2>&1; then
+    denied=true
+    err="${err:+$err; }soft deny: 200 with empty artifacts"
+  fi
+  log_step "xray_summary:${label}" "$CODE" "${repo}${rel}${err:+ — $err}" "$denied"
 
   http_call GET "/artifactory/api/storage/${repo}${rel}?properties"
   cp "$BODY" "${OUT_DIR}/props-${label}.json"
@@ -144,7 +177,6 @@ follow_artifact() {
   fi
 }
 
-# Build result field names are not yet confirmed on tomjpd2; try the likely candidates and keep the raw record.
 follow_build_hits() {
   local ecosystem=$1 file=$2
   local n=0
@@ -153,7 +185,7 @@ follow_build_hits() {
     n=$((n + 1))
     fetch_build "${ecosystem}-build${n}" "$bname" "$bnum"
   done < <(jq -r '.result[]? | select(.type=="Build")
-      | [(.build_name // .name // ""), (.build_number // .version // .number // "")] | @tsv' "$file" 2>/dev/null)
+      | [(.name // ""), (.version // "")] | @tsv' "$file" 2>/dev/null)
   jq -c '[.result[]? | select(.type=="Build")]' "$file" > "${OUT_DIR}/build-hits-${ecosystem}.json" 2>/dev/null || true
   BUILD_HITS=$n
 }
@@ -189,7 +221,7 @@ log_step impact_search_npm "$SEARCH_CODE" "name=${NPM_NAME} type=npm version=${N
 NPM_SEARCH_CODE=$SEARCH_CODE
 run_ecosystem npm "${OUT_DIR}/impact-npm.json"
 
-impact_search maven "name=$(uri "$MVN_NAME")&type=maven&namespace=$(uri "$MVN_NS")&version=$(uri "$MVN_VER")"
+impact_search maven "name=$(uri "$MVN_NAME")&type=maven&version=$(uri "$MVN_VER")"
 log_step impact_search_maven "$SEARCH_CODE" "name=${MVN_NAME} type=maven version=${MVN_VER}"
 run_ecosystem maven "${OUT_DIR}/impact-maven.json"
 

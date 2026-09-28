@@ -14,7 +14,7 @@ Build grants target the `artifactory-build-info` repository; build names are inc
 | case-D.json | lab-plt-d | Manage Reports + repo READ |
 | case-E.json | lab-plt-e | Manage Reports + build READ |
 | case-F.json | lab-plt-f | Candidate least privilege |
-| case-G.json | lab-plt-g | F + ANNOTATE; Manage Xray Metadata added in UI; `watch_manager` / `policy_manager` user flags |
+| case-G.json | lab-plt-g | F + ANNOTATE + SCAN (Manage Xray Metadata); `watch_manager` / `policy_manager` user flags |
 | case-H.json | lab-plt-h | Repo READ npm local only |
 | case-I.json | lab-plt-i | Build READ `**` excluding `isplt-lab-*/**` |
 
