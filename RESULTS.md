@@ -45,21 +45,21 @@ When Impact Search returns the **Build** itself (npm and Maven in this lab), **M
 
 All personas are non-admin, have no group memberships, and ran with their own token (token subject verified before each run). Hit counts were identical for every case that could search.
 
-Legend: ✅ 200 · ❌ 403 · ∅ soft deny (200 empty / 404) · — not reached
+Legend: ✅ 200 · ❌ 403 · ⚠️ soft deny (access refused, but returned as 200 with an empty body or 404 instead of 403) · — not reached
 
 | Case | Grants | Impact Search | Docker: summary → props → build → CI | npm via Build hit | Maven via Build hit | Remote-cache hit | Outcome |
 |------|--------|---------------|--------------------------------------|-------------------|---------------------|------------------|---------|
-| A | Manage Reports | ✅ | ∅ → ∅ → — → — | ❌ | ❌ | ❌ | Search only |
+| A | Manage Reports | ✅ | ⚠️ → ⚠️ → — → — | ❌ | ❌ | ❌ | Search only |
 | B | Repo Read | ❌ | — | — | — | — | Blocked at search |
 | C | Build Read | ❌ | — | — | — | — | Blocked at search |
 | D | MR + Repo Read | ✅ | ✅ → ✅ → ❌ → — | ❌ | ❌ | ❌ | **Customer bug** |
-| E | MR + Build Read | ✅ | ∅ → ∅ → — → — | ✅ → ✅ | ✅ → ✅ | ❌ | Builds only |
+| E | MR + Build Read | ✅ | ⚠️ → ⚠️ → — → — | ✅ → ✅ | ✅ → ✅ | ❌ | Builds only |
 | F | MR + Repo Read + Build Read | ✅ | ✅ → ✅ → ✅ → ✅ | ✅ → ✅ | ✅ → ✅ | ❌ | **Full journey** |
 | G | F + Annotate + Scan + Watches/Policies | ✅ | ✅ → ✅ → ✅ → ✅ | ✅ → ✅ | ✅ → ✅ | ❌ | Same as F |
-| H | F, Repo Read on npm local only | ✅ | ∅ → ∅ → — → — | ✅ → ✅ | ✅ → ✅ | ❌ | Docker route fails |
+| H | F, Repo Read on npm local only | ✅ | ⚠️ → ⚠️ → — → — | ✅ → ✅ | ✅ → ✅ | ❌ | Docker route fails |
 | I | F, Build Read excludes `isplt-lab-*/**` | ✅ | ✅ → ✅ → ❌ → — | ❌ | ❌ | ❌ | Build Info fails |
 
-Direct probes (npm build 5 / Maven build 5 / Docker manifest properties): A ❌❌∅ · B ❌❌✅ · C ✅✅∅ · D ❌❌✅ · E ✅✅∅ · F ✅✅✅ · G ✅✅✅ · H ✅✅∅ · I ❌❌✅
+Direct probes (npm build 5 / Maven build 5 / Docker manifest properties): A ❌❌⚠️ · B ❌❌✅ · C ✅✅⚠️ · D ❌❌✅ · E ✅✅⚠️ · F ✅✅✅ · G ✅✅✅ · H ✅✅⚠️ · I ❌❌✅
 
 Raw evidence: `harness/out/plt-{a..i}-179055*/` (`summary.json` plus each response body).
 
